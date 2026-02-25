@@ -3,13 +3,16 @@
 #include <variant>
 #include <vector>
 
+#include "path_planner.hpp"
 #include "vec2.hpp"
 
+struct PathPlanningActivity{
+  Vec2 goal;
+};
+
 struct DrivingActivity{
-  // TODO: path planning
-  // std::vector<Vec2> path;
-  // std::vector<Vec2>::iterator current_goal;
-  Vec2 position;
+  std::vector<GraphNode> path;
+  int current_goal_index;
   double smg = 0.1;
   double power = -10.0;
 };
@@ -31,6 +34,7 @@ struct HibernationActivity{
 };
 
 using Activity = std::variant<
+  PathPlanningActivity,
   DrivingActivity,
   DrillingActivity,
   RechargeActivity,
