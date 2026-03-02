@@ -30,7 +30,7 @@ struct RechargeActivity{
 
 struct HibernationActivity{
   double wakeup_time;       // seconds
-  double power = -1.0;
+  double power = 0.0;
 };
 
 using Activity = std::variant<

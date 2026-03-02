@@ -18,13 +18,13 @@ template<class... Ts>
 struct overloaded : Ts... { using Ts::operator()...; };
 
 int main() {
-  double dt = 1;
+  double dt = 100;
   SimpleRover vehicle{};
 
   VehicleState s{
-    {0.0, 0.0},
+    {155.0, 13.0},
     vehicle.max_energy,
-    0.0,
+    408000.0,
     0.0
   };
 
@@ -32,12 +32,11 @@ int main() {
   std::vector<Activity> activity_history{};
 
   std::deque<Activity> activities{ 
-    PathPlanningActivity{{0.0, 5.0}},
-    DrillingActivity{30.0},       // Drain 30 W * 30 Seconds, .25% of battery
-    PathPlanningActivity{{1.0, 1.0}},
+    PathPlanningActivity{{97.0, 176.0}},
     RechargeActivity{vehicle.max_energy}, // Recharge fully
-    PathPlanningActivity{{2.0, 12.0}},
-    HibernationActivity{2400} // Wait until 2400th second of mission
+    HibernationActivity{954000},
+    PathPlanningActivity{{105.0, 183.0}},
+    DrillingActivity{3600.0}
   };
 
   SlopeMap slope{};
@@ -79,6 +78,8 @@ int main() {
             0
           });
 
+          std::cout << std::format("path start: {}, time: {}, path end: {}, time: {}\n", path[0].position, path[0].time, path[path.size()-1].position, path[path.size()-1].time);
+
           //TODO: this isn't very nice, maybe bookkeeping activities are distinct from simulation activities
           // alternatively things like updating the time of the simulation belong in activities
           next_state.t -= dt;
@@ -87,7 +88,6 @@ int main() {
         [&](DrivingActivity& act) -> bool { 
           auto goal = act.path[act.current_goal_index];
           auto heading = goal.position - next_state.position;
-          std::cout << std::format("Goal: {}, Current: {}, Heading: {}\n", goal.position, next_state.position, heading);
 
           if(heading.length() <= act.smg * dt) { 
             next_state.position = goal.position; // Drop smg as necessary to avoid compounding position error

@@ -20,6 +20,8 @@ struct VehicleContext {
     // Eventually we'll calculate velocity based on position, maps, and activities
     return 1.0; 
   };
+
+  double slope_constraint = 15.0;
 };
 
 struct PlannerConfig {

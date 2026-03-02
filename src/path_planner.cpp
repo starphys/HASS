@@ -7,7 +7,7 @@
 namespace {
   int get_key(GraphNode& node, WorldContext& context) {
     // We only want one node per XYT voxel
-    return ((std::floor(node.time) / context.seconds_per_timestep) * context.width * context.height) + (node.position.y * context.width) + (node.position.x);
+    return (static_cast<int>(node.time / context.seconds_per_timestep) * context.width * context.height) + (static_cast<int>(node.position.y) * context.width) + static_cast<int>(node.position.x);
   }
 
   double h(GraphNode& node, Vec2& goal, PlannerConfig& config) {
@@ -15,7 +15,9 @@ namespace {
   }
 
   double d(GraphNode& nodeA, GraphNode& nodeB, PlannerConfig& config) {
-    return (nodeB.position - nodeA.position).length() / config.vehicle.smg(nodeB, config.maps, config.mission);
+    double driving_time = (nodeB.position - nodeA.position).length() / config.vehicle.smg(nodeB, config.maps, config.mission);
+    double wait_time = nodeB.time - nodeA.time;
+    return driving_time + wait_time;
   }
 
   std::vector<GraphNode> reconstruct_path(std::unordered_map<int, GraphNode>& nodes, std::unordered_map<int, int>& cameFrom, int currentIndex) {
@@ -53,7 +55,10 @@ namespace {
         newNode.time = t;
 
         // Node must be in world bounds
-        if(t < 0 || t >= config.world.timesteps) { continue; }
+        if(t < 0 || t >= (config.world.timesteps * config.world.seconds_per_timestep)) { continue; }
+
+        // Node must not violate slope constraint
+        if(config.maps.slope.at(newX, newY) >= config.vehicle.slope_constraint) { continue; }
         
         neighbors.push_back(newNode);
       }
@@ -61,7 +66,10 @@ namespace {
 
     // Wait node, wait only until the exact boundary of the next timestep.
     auto spt = config.world.seconds_per_timestep;
-    neighbors.push_back({{static_cast<double>(x), static_cast<double>(y)}, (current.time / spt) * spt + spt});
+    double time_after_wait = (current.time / spt) * spt + spt;
+    if( time_after_wait >= 0 && time_after_wait < (config.world.timesteps * config.world.seconds_per_timestep)) {
+      neighbors.push_back({{static_cast<double>(x), static_cast<double>(y)}, time_after_wait});
+    }
 
     return neighbors;
   }
